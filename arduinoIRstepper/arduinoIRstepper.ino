@@ -14,7 +14,7 @@ TM1637 tm1637(CLK,DIO);
 
 volatile int pos = 0;
 int currentPos = 0;
-unsigned long keycode;
+unsigned long keycode, t1, dt;
 
 const int stepPin = 11;
 const int dirPin = 10;
@@ -48,11 +48,19 @@ void setup() {
   //BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
   tm1637.set(BRIGHT_TYPICAL);
   //tm1637.point(POINT_ON);
-  shownumber(pos);  
+  shownumber(pos); 
+  t1 = 0; 
 }
 
 
 void loop() {
+  dt = millis() - t1;
+  if (dt >= 5000 && stato == LOW){      
+      digitalWrite(enPin, HIGH);
+      digitalWrite(LED, LOW);
+      stato = !stato;
+  }
+  
   if (IrReceiver.decode()) {
     keycode = IrReceiver.decodedIRData.command;
     //Serial.println(keycode);
@@ -69,8 +77,10 @@ void loop() {
       stato = !stato;
       digitalWrite(enPin, stato);
       digitalWrite(LED, !stato);
+      t1 = millis();
       currentPos = pos; 
    }
+
 
    if (keycode == 31) {
       delay(300);
@@ -78,6 +88,7 @@ void loop() {
       digitalWrite(enPin, stato);
       digitalWrite(LED, !stato);
       keycode = 0;
+      t1 = millis();
       currentPos = pos;
       }
 
@@ -85,15 +96,18 @@ void loop() {
    if (keycode == 29 && stato == LOW) { 
     pos --;
     if (pos < 0) pos = 0;
-    keycode = 0;  
+    keycode = 0;
+      
   }
   
 if (keycode == 30 && stato == LOW) { 
     pos ++;
-    keycode = 0;   
+    keycode = 0;
+       
   }
 
-if (currentPos != pos && stato == LOW) { 
+if (currentPos != pos && stato == LOW) {
+    t1 = millis(); 
     shownumber(pos);
     if (currentPos < pos) {
       
